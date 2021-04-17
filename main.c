@@ -95,6 +95,42 @@ void smallest_movie() {
 	closedir(currDir);
 }
 
+void chosen_movie() {
+	/* code adapted from 3_5_stat_example.c */
+	printf("Enter file name to be processed: ");
+	char chosenFileName[256];
+	fgets(chosenFileName, 256, stdin);
+	chosenFileName[strcspn(chosenFileName, "\n")] = 0;
+
+    printf("Entered filename: %s\n", chosenFileName);
+	/* open current directory */
+	DIR * currDir = opendir(".");
+	struct dirent *aDir;
+	struct stat dirStat;
+
+	char* processFile = NULL;
+
+	/* go through all entries */
+	while((aDir = readdir(currDir)) != NULL) {
+		/* check if file name matches entered file name */
+		if(strcmp(chosenFileName, aDir->d_name) == 0) {
+			
+			/* get metadata for current entry */
+			stat(aDir->d_name, &dirStat);
+			
+			processFile = (aDir->d_name);
+		}
+	}
+	
+	if (processFile == NULL) {
+		printf("No file named %s in directory\n", chosenFileName);
+	}
+	else {
+		printf("Now processing chosen file named %s\n", processFile);
+	}
+	closedir(currDir);
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -142,6 +178,7 @@ int main(int argc, char* argv[])
         				smallest_movie();
         				break;
         			case 3:
+        				chosen_movie();
         				break;
         			default: 
         				break;
