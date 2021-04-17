@@ -13,6 +13,10 @@
 #include <libgen.h>
 #include <stdbool.h>
 
+void largest_movie() {
+	
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -43,6 +47,16 @@ int main(int argc, char* argv[])
             	printf("Enter 2 to pick the smallest file\n");
             	printf("Enter 3 to specify the name of a file\n");
             	printf("\nEnter a choice from 1 to 3: ");
+
+            	char strProcessChoice[2];
+            	int processChoice;
+            	fgets(strProcessChoice, 2, stdin);
+       			/* remove '\n' from input stream before reading user input */
+        		char c = getchar();
+        		/* not checking data type here as Assignment explicitly says input will be integer */
+        		intUserChoice = atoi(strUserChoice);
+
+
             }
                 break;
             case 2:
