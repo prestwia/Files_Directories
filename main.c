@@ -117,13 +117,18 @@ struct movie* makeList(char* filePath)
 
     filename = basename(filePath);
 
-    printf("Processed file %s and parsed data for %i movies\n", filename, numMovies - 1);
-
     free(currLine);
     fclose(movieFile);
     return head;
 }
 
+/* 
+*	Create new directory with prestwia.movies.(random).
+*	Parse file and populate movies Linked List
+*	Iterate through all movies and print titles of
+*	movies of same year in file year.txt
+*   Set year.txt permissions to rw-r-----
+*/
 void processFile(char* filename) {
 	/* generate random num from 0 to 9999 inclusive */
 	srand(time(0));
@@ -151,24 +156,26 @@ void processFile(char* filename) {
 
 	/* iterate through all movies */
 	while (movieList != NULL) {
-		/* construct path to new file */
+		/* construct path to new file year.txt */
 		char newFile[256];
 		strcpy(newFile, dirName);
 		strcat(newFile, "/");
 		strcat(newFile, movieList->year);
 		strcat(newFile, ".txt");
 		
+		/* open file with append mode and write title */
 		FILE *fp = fopen(newFile, "a");
 		char fileString[100];
 		strcpy(fileString, movieList->title);
 		strcat(fileString, "\n");
 		fprintf(fp, fileString);
 		fclose(fp);
-
+		/* set file permission to rw-r-----, or print error msg */
 		if (chmod(newFile, 0640) != 0) {
 			printf("chmod() error for file %s\n", newFile);
 		}
 
+		/* iterate to next movie */
 		movieList = movieList->next;
 	}
 
@@ -186,6 +193,11 @@ void processFile(char* filename) {
     }
 }
 
+/* 
+*	Find largest file in current directory
+*	that is names movies_[].csv.
+*	Process said file.
+*/
 void largest_movie() {
 	/* code adapted from 3_5_stat_example.c */
 	/* open current directory */
@@ -225,6 +237,11 @@ void largest_movie() {
 	closedir(currDir);
 }
 
+/* 
+*	Find smallest file in current directory
+*	that is names movies_[].csv.
+*	Process said file.
+*/
 void smallest_movie() {
 	/* code adapted from 3_5_stat_example.c */
 	/* open current directory */
@@ -260,9 +277,14 @@ void smallest_movie() {
 	}
 	
 	printf("Now processing chosen file named %s\n", minFileName);
+	processFile(minFileName);
 	closedir(currDir);
 }
 
+/* 
+*	Find file that user enters in current directory.
+*	Process said file.
+*/
 void chosen_movie() {
 	/* code adapted from 3_5_stat_example.c */
 	printf("Enter file name to be processed: ");
@@ -276,7 +298,7 @@ void chosen_movie() {
 	struct dirent *aDir;
 	struct stat dirStat;
 
-	char* processFile = NULL;
+	char* dirFile = NULL;
 
 	/* go through all entries */
 	while((aDir = readdir(currDir)) != NULL) {
@@ -286,26 +308,32 @@ void chosen_movie() {
 			/* get metadata for current entry */
 			stat(aDir->d_name, &dirStat);
 			
-			processFile = (aDir->d_name);
+			dirFile = (aDir->d_name);
 		}
 	}
 	
-	if (processFile == NULL) {
+	/* print error msg if file not found, else print processing msg */
+	bool foundFile = false;
+	if (dirFile == NULL) {
 		printf("No file named %s in directory\n", chosenFileName);
 	}
 	else {
-		printf("Now processing chosen file named %s\n", processFile);
+		printf("Now processing chosen file named %s\n", dirFile);
+		foundFile = true;
 	}
+
+	/* close directory */
 	closedir(currDir);
+
+	/* process file */
+	if (foundFile)
+		processFile(dirFile);
 }
 
 
 
 int main(int argc, char* argv[])
 {
-
-    /* read in data from file and process */
-    //struct movie* list = processFile(argv[1]);
     
     char strUserChoice[2];
     int intUserChoice;
