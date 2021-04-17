@@ -12,9 +12,87 @@
 #include <string.h>
 #include <libgen.h>
 #include <stdbool.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <limits.h>
+
 
 void largest_movie() {
+	/* code adapted from 3_5_stat_example.c */
+	/* open current directory */
+	DIR * currDir = opendir(".");
+	struct dirent *aDir;
+	struct stat dirStat;
+
+	char* maxFileName;
+	int maxFileSize = 0;
+
+	/* go through all entries */
+	while((aDir = readdir(currDir)) != NULL) {
+		/* check if file name begins with "movies_" */
+		if(strncmp("movies_", aDir->d_name, strlen("movies_")) == 0) {
+			/* get and check if file extension is .csv */
+			char* extension;
+			extension = strrchr(aDir->d_name, '.');
+			/* check if extension exists, else seg fault */
+			if (extension != NULL) {
+				/* if extension is .csv get filename, and filesize */
+				if (strcmp(extension, ".csv") == 0) {
+					/* get metadata for current entry */
+					stat(aDir->d_name, &dirStat);
+					
+					/* get largest filename and filesize */
+				   	if (dirStat.st_size > maxFileSize) {
+				   		maxFileSize = (dirStat.st_size);
+				   		maxFileName = (aDir->d_name);
+				   	}
+                }	
+			}
+		}
+	}
 	
+	printf("Now processing chosen file named %s\n", maxFileName);
+	closedir(currDir);
+}
+
+void smallest_movie() {
+	/* code adapted from 3_5_stat_example.c */
+	/* open current directory */
+	DIR * currDir = opendir(".");
+	struct dirent *aDir;
+	struct stat dirStat;
+
+	char* minFileName;
+	int minFileSize = INT_MAX;
+
+	/* go through all entries */
+	while((aDir = readdir(currDir)) != NULL) {
+		/* check if file name begins with "movies_" */
+		if(strncmp("movies_", aDir->d_name, strlen("movies_")) == 0) {
+			/* get and check if file extension is .csv */
+			char* extension;
+			extension = strrchr(aDir->d_name, '.');
+			/* check if extension exists, else seg fault */
+			if (extension != NULL) {
+				/* if extension is .csv get filename, and filesize */
+				if (strcmp(extension, ".csv") == 0) {
+					/* get metadata for current entry */
+					stat(aDir->d_name, &dirStat);
+					
+					/* get largest filename and filesize */
+				   	if (dirStat.st_size < minFileSize) {
+				   		minFileSize = (dirStat.st_size);
+				   		minFileName = (aDir->d_name);
+				   	}
+                }	
+			}
+		}
+	}
+	
+	printf("Now processing chosen file named %s\n", minFileName);
+	closedir(currDir);
 }
 
 int main(int argc, char* argv[])
@@ -54,9 +132,20 @@ int main(int argc, char* argv[])
        			/* remove '\n' from input stream before reading user input */
         		char c = getchar();
         		/* not checking data type here as Assignment explicitly says input will be integer */
-        		intUserChoice = atoi(strUserChoice);
+        		processChoice = atoi(strProcessChoice);
 
-
+        		switch (processChoice) {
+        			case 1: 
+        				largest_movie();
+        				break;
+        			case 2:
+        				smallest_movie();
+        				break;
+        			case 3:
+        				break;
+        			default: 
+        				break;
+        		}
             }
                 break;
             case 2:
