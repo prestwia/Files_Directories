@@ -285,7 +285,7 @@ void smallest_movie() {
 *	Find file that user enters in current directory.
 *	Process said file.
 */
-void chosen_movie() {
+bool chosen_movie() {
 	/* code adapted from 3_5_stat_example.c */
 	printf("Enter file name to be processed: ");
 	char chosenFileName[256];
@@ -316,6 +316,7 @@ void chosen_movie() {
 	bool foundFile = false;
 	if (dirFile == NULL) {
 		printf("No file named %s in directory\n", chosenFileName);
+		return true;
 	}
 	else {
 		printf("Now processing chosen file named %s\n", dirFile);
@@ -328,6 +329,8 @@ void chosen_movie() {
 	/* process file */
 	if (foundFile)
 		processFile(dirFile);
+
+	return false;
 }
 
 
@@ -381,8 +384,7 @@ int main(int argc, char* argv[])
 	        				nestedMenu = false;
 	        				break;
 	        			case 3:
-	        				chosen_movie();
-	        				nestedMenu = false;
+	        				nestedMenu = chosen_movie();
 	        				break;
 	        			default: 
 	        				printf("You entered an incorrect choice. Try Again.\n");
