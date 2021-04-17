@@ -17,7 +17,174 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
+#include <time.h>
 
+/* struct for student information */
+struct movie
+{
+    char* title;
+    char* year;
+    char* languages;
+    char* rating;
+    struct movie* next;
+};
+
+/* Parse the current line which is space delimited and create a
+*  movie struct with the data in this line
+*/
+struct movie* createMovie(char* currLine)
+{
+    struct movie* currMovie = malloc(sizeof(struct movie));
+
+    // For use with strtok_r
+    char* saveptr;
+
+    // The first token is the title
+    char* token = strtok_r(currLine, ",", &saveptr);
+    currMovie->title = calloc(strlen(token) + 1, sizeof(char));
+    strcpy(currMovie->title, token);
+
+    // The next token is the year
+    token = strtok_r(NULL, ",", &saveptr);
+    currMovie->year = calloc(strlen(token) + 1, sizeof(char));
+    strcpy(currMovie->year, token);
+
+    // The next token is the languages
+    token = strtok_r(NULL, ",", &saveptr);
+    currMovie->languages = calloc(strlen(token) + 1, sizeof(char));
+    strcpy(currMovie->languages, token);
+
+    // The last token is the rating
+    token = strtok_r(NULL, "\n", &saveptr);
+    currMovie->rating = calloc(strlen(token) + 1, sizeof(char));
+    strcpy(currMovie->rating, token);
+
+    // Set the next node to NULL in the newly created student entry
+    currMovie->next = NULL;
+
+    return currMovie;
+}
+
+
+/*
+* Return a linked list of students by parsing data from
+* each line of the specified file.
+*/
+struct movie* makeList(char* filePath)
+{
+    // Open the specified file for reading only
+    FILE* movieFile = fopen(filePath, "r");
+
+    char* currLine = NULL;
+    size_t len = 0;
+    ssize_t nread;
+    //char* token;
+    int numMovies = 0;
+    char* filename;
+
+    // The head of the linked list
+    struct movie* head = NULL;
+    // The tail of the linked list
+    struct movie* tail = NULL;
+
+    // Read the file line by line
+    while ((nread = getline(&currLine, &len, movieFile)) != -1)
+    {
+        numMovies++;
+        if (numMovies == 1) {
+            continue;
+        }
+
+        // Get a new student node corresponding to the current line
+        struct movie* newNode = createMovie(currLine);
+
+        // Is this the first node in the linked list?
+        if (head == NULL)
+        {
+            // This is the first node in the linked link
+            // Set the head and the tail to this node
+            head = newNode;
+            tail = newNode;
+        }
+        else
+        {
+            // This is not the first node.
+            // Add this node to the list and advance the tail
+            tail->next = newNode;
+            tail = newNode;
+        }
+    }
+
+    filename = basename(filePath);
+
+    printf("Processed file %s and parsed data for %i movies\n", filename, numMovies - 1);
+
+    free(currLine);
+    fclose(movieFile);
+    return head;
+}
+
+void processFile(char* filename) {
+	/* generate random num from 0 to 9999 inclusive */
+	srand(time(0));
+	int lower = 0;
+	int upper = 99999;
+	int randNum = (rand() % (upper - lower + 1));
+	
+	/* user random number to create directory name */
+	char num[5];
+	sprintf(num, "%d", randNum);
+	char dirName[256];
+	strcpy(dirName, "./prestwia.movies.");
+	strcat(dirName, num);
+	
+	/* create new directory with name dirName */
+	int result = mkdir(dirName, 0750);
+	printf("Created directory with name %s\n", dirName);
+
+	/* construct name of source file from parts above */
+	char sourceFile[256];
+	strcpy(sourceFile, "./");
+	strcat(sourceFile, filename);
+
+	struct movie* movieList = makeList(sourceFile);
+
+	/* iterate through all movies */
+	while (movieList != NULL) {
+		/* construct path to new file */
+		char newFile[256];
+		strcpy(newFile, dirName);
+		strcat(newFile, "/");
+		strcat(newFile, movieList->year);
+		strcat(newFile, ".txt");
+		
+		FILE *fp = fopen(newFile, "a");
+		char fileString[100];
+		strcpy(fileString, movieList->title);
+		strcat(fileString, "\n");
+		fprintf(fp, fileString);
+		fclose(fp);
+
+		if (chmod(newFile, 0640) != 0) {
+			printf("chmod() error for file %s\n", newFile);
+		}
+
+		movieList = movieList->next;
+	}
+
+	/* free all memory */
+    struct movie* tmp;
+    while (movieList != NULL)
+    {
+        tmp = movieList;
+        movieList = movieList->next;
+        free(tmp->title);
+        free(tmp->year);
+        free(tmp->languages);
+        free(tmp->rating);
+        free(tmp);
+    }
+}
 
 void largest_movie() {
 	/* code adapted from 3_5_stat_example.c */
@@ -54,6 +221,7 @@ void largest_movie() {
 	}
 	
 	printf("Now processing chosen file named %s\n", maxFileName);
+	processFile(maxFileName);
 	closedir(currDir);
 }
 
@@ -131,6 +299,8 @@ void chosen_movie() {
 	closedir(currDir);
 }
 
+
+
 int main(int argc, char* argv[])
 {
 
@@ -139,8 +309,9 @@ int main(int argc, char* argv[])
     
     char strUserChoice[2];
     int intUserChoice;
+    bool menuLoop = true;
 
-    while (true) {
+    while (menuLoop) {
         /* present user menu and read input */
         printf("\n1. Select file to process\n");
         printf("2. Exit the program\n");
@@ -156,33 +327,40 @@ int main(int argc, char* argv[])
         switch (intUserChoice) {
             case 1:
             {
-            	printf("Which file do you want to process?\n");
-            	printf("Enter 1 to pick the largest file\n");
-            	printf("Enter 2 to pick the smallest file\n");
-            	printf("Enter 3 to specify the name of a file\n");
-            	printf("\nEnter a choice from 1 to 3: ");
+            	bool nestedMenu = true;
+            	while(nestedMenu) {
+	            	printf("\nWhich file do you want to process?\n");
+	            	printf("Enter 1 to pick the largest file\n");
+	            	printf("Enter 2 to pick the smallest file\n");
+	            	printf("Enter 3 to specify the name of a file\n");
+	            	printf("\nEnter a choice from 1 to 3: ");
 
-            	char strProcessChoice[2];
-            	int processChoice;
-            	fgets(strProcessChoice, 2, stdin);
-       			/* remove '\n' from input stream before reading user input */
-        		char c = getchar();
-        		/* not checking data type here as Assignment explicitly says input will be integer */
-        		processChoice = atoi(strProcessChoice);
+	            	char strProcessChoice[2];
+	            	int processChoice;
+	            	fgets(strProcessChoice, 2, stdin);
+	       			/* remove '\n' from input stream before reading user input */
+	        		char c = getchar();
+	        		/* not checking data type here as Assignment explicitly says input will be integer */
+	        		processChoice = atoi(strProcessChoice);
 
-        		switch (processChoice) {
-        			case 1: 
-        				largest_movie();
-        				break;
-        			case 2:
-        				smallest_movie();
-        				break;
-        			case 3:
-        				chosen_movie();
-        				break;
-        			default: 
-        				break;
-        		}
+	        		switch (processChoice) {
+	        			case 1: 
+	        				largest_movie();
+	        				nestedMenu = false;
+	        				break;
+	        			case 2:
+	        				smallest_movie();
+	        				nestedMenu = false;
+	        				break;
+	        			case 3:
+	        				chosen_movie();
+	        				nestedMenu = false;
+	        				break;
+	        			default: 
+	        				printf("You entered an incorrect choice. Try Again.\n");
+	        				break;
+	        		}
+	        	}
             }
                 break;
             case 2:
@@ -197,18 +375,6 @@ int main(int argc, char* argv[])
         
     }
 
-    /* free all memory */
-    //struct movie* tmp;
-    //while (list != NULL)
-    //{
-    //    tmp = list;
-    //    list = list->next;
-    //    free(tmp->title);
-    //    free(tmp->year);
-    //    free(tmp->languages);
-    //    free(tmp->rating);
-    //    free(tmp);
-    //}
 
     return EXIT_SUCCESS;
 }
